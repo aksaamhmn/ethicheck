@@ -21,6 +21,32 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
+## Ethicheck UI (this project)
+
+We added a simple landing page that matches the mockup. It lives at `resources/views/ethicheck.blade.php` and is served on the root route `/`.
+
+Quick start (Windows PowerShell):
+
+```powershell
+# Install PHP deps
+composer install
+
+# Copy .env and generate app key (run once)
+copy .env.example .env
+php artisan key:generate
+
+# Run the app on http://127.0.0.1:8000
+php artisan serve
+
+# Optional: Frontend dev server (not required for this page)
+npm install
+npm run dev
+```
+
+Notes:
+- The new page is pure CSS/HTML and does not require Vite/Tailwind to render.
+- Wire the "Submit here" button to your analyzer endpoint when it's ready.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
