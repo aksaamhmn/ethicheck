@@ -1,0 +1,56 @@
+:root{ --bg-window:#d9d9db; --bg-card:#e8f6cc; --blue:#2d5fbf; --blue-dark:#224c99; --text:#1b4a7a; --ink:#2f5aa0; --white:#fff; --shadow:0 8px 20px rgba(0,0,0,.08); --radius:18px; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg-window);font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;color:var(--text);padding:40px 10px}
+.window{width:min(1200px,96vw);background:var(--bg-card);border-radius:var(--radius);position:relative;box-shadow:var(--shadow);margin:0 auto}
+.win-bar{height:42px;display:flex;align-items:center;background:#efefef;border-top-left-radius:var(--radius);border-top-right-radius:var(--radius);padding:0 16px;position:relative;z-index:20}
+.dot{width:12px;height:12px;border-radius:50%;margin-right:8px}.dot.red{background:#ff5f56}.dot.yellow{background:#ffbd2e}.dot.green{background:#27c93f}
+/* Section menu: keep exactly like screenshot */
+.tabs{display:flex;align-items:center;margin-left:28px;height:100%}
+.tab{background:#d4e3ff;color:#2f53a3;padding:10px 26px 9px;border-radius:12px 12px 0 0;text-decoration:none;cursor:pointer;font-family:'Patrick Hand',cursive;font-size:25px;line-height:1;display:flex;align-items:center;height:100%;transition:all .15s ease;border-right:1px solid #c6d8ff;margin-right:-1px}
+.tab:last-child{border-right:none}
+.tab.active{background:var(--bg-card);color:var(--blue);font-weight:700;z-index:21}
+.tab:hover{background:#c7dcff}
+
+.wrap{padding:18px 28px 36px;position:relative;z-index:9}
+.grid{display:grid;grid-template-columns:1fr 1.1fr;gap:32px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.tabs{position:static;padding:8px 14px 0}.wrap{padding-top:12px}}
+
+.headline{font-size:clamp(28px,5vw,58px);line-height:1.05;color:#2f64b3;margin:18px 0 18px}
+.headline span{color:#2e66cc}
+.panel{background:rgba(255,255,255,.92);border:2px solid rgba(46,102,204,.18);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+
+/* Topic choice as playing cards with 3D flip */
+.topics{position:relative;height:180px;display:flex;align-items:center;justify-content:center;perspective:1000px}
+.playing-card{width:120px;height:160px;background:#fff;border:3px solid #1a1a1a;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.15);position:absolute;cursor:pointer;user-select:none;display:grid;place-items:center;transition:transform .2s ease, box-shadow .2s ease}
+.playing-card:hover{transform:translateY(-6px) scale(1.02);box-shadow:0 16px 34px rgba(0,0,0,.2)}
+.pc-inner{position:relative;inset:0;width:100%;height:100%;transform-style:preserve-3d;transition:transform .6s ease}
+.playing-card.flipped .pc-inner{transform:rotateY(180deg)}
+.pc-face{position:absolute;inset:8px;display:grid;place-items:center;font-size:52px;background:#fff;border-radius:8px;backface-visibility:hidden}
+.pc-face.back{transform:rotateY(180deg);display:grid;place-items:center;padding:8px}
+.pc-corner{position:absolute;font-size:18px}
+.pc-corner.tl{top:6px;left:8px}
+.pc-corner.br{bottom:6px;right:8px;transform:rotate(180deg)}
+.playing-card.spade .pc-face,.playing-card.club .pc-face{color:#111}
+.playing-card.heart .pc-face,.playing-card.diamond .pc-face{color:#d9480f}
+/* label shown on hover (front) */
+.pc-label{position:absolute;bottom:8px;left:8px;right:8px;text-align:center;font-size:13px;color:#2d5fbf;font-weight:700;background:rgba(233,244,255,.85);border:1px solid #cfe0ff;border-radius:8px;padding:4px 6px;opacity:.0;transform:translateY(6px);transition:all .18s ease}
+.playing-card:hover .pc-label{opacity:1;transform:translateY(0)}
+/* chosen topic badge */
+.topic-chosen{margin:8px 0 6px;color:#2d5fbf;font-weight:700}
+
+.quiz{display:none;margin-top:16px}
+.question-box{background:#fff;border-radius:12px;border:2px solid #cfe0ff;padding:16px;min-height:110px}
+.options{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.opt{background:#f6fbff;border:2px solid #d7e6ff;padding:12px;border-radius:10px;cursor:pointer}
+.opt.correct{background:#e9fff3;border-color:#2fbf7a}
+.opt.wrong{background:#fff0f0;border-color:#ff6b6b}
+.controls{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+.btn{background:#2d5fbf;color:#fff;padding:10px 16px;border-radius:20px;border:0;cursor:pointer}
+.btn.secondary{background:#fff;color:#2d5fbf;border:2px solid #cfe0ff}
+.feedback{margin-top:12px;padding:12px;border-radius:10px;background:#fbfdff;border-left:4px solid rgba(46,102,204,.2);display:none}
+.progress{font-weight:700;color:#2d5fbf}
+
+@media (prefers-reduced-motion: reduce){
+  .pc-inner{transition:none}
+  .playing-card{transition:none}
+}
