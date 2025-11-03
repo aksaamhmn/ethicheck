@@ -50,19 +50,25 @@ class EthicheckController extends Controller
 
             Lakukan tugas-tugas berikut:
             1. Kembalikan respons HANYA dalam format JSON yang valid.
-            2. JSON harus memiliki tiga kunci: 'highlighted_text', 'explanations', dan 'status_message'.
+            2. JSON harus memiliki kunci-kunci: 'highlighted_text', 'explanations', 'status_message'.
+            3. Tambahkan kunci 'score' (integer 0-100) yang menunjukkan seberapa sesuai teks dengan pedoman (0 = sangat buruk, 100 = sempurna).
+            4. Tambahkan kunci 'recommended_text' yang berisi versi berita yang telah diperbaiki atau direkomendasikan agar sesuai pedoman (ringkas dan konkret jika memungkinkan).
 
             SKENARIO 1: JIKA ADA PELANGGARAN
-            - 'highlighted_text': Kembalikan teks berita LENGKAP, tetapi bungkus frasa yang melanggar dengan tag <mark data-violation-id='N'>...</mark>.
+            - 'highlighted_text': Kembalikan teks berita LENGKAP, tetapi bungkus frasa yang melanggar dengan tag <mark data-violation-id=\"N\">...</mark>.
             - 'explanations': Berisi array objek (id, rule, reasoning).
             - 'status_message': null
+            - 'score': Berikan angka antara 0-100 sesuai tingkat pelanggaran.
+            - 'recommended_text': Berikan contoh perbaikan teks yang menanggulangi pelanggaran.
 
             SKENARIO 2: JIKA TIDAK ADA PELANGGARAN
             - 'highlighted_text': Kembalikan teks berita LENGKAP apa adanya (tanpa tag <mark>).
             - 'explanations': Kembalikan array kosong [].
             - 'status_message': \"Berita sudah sesuai pedoman\"
+            - 'score': 100
+            - 'recommended_text': Kembalikan teks asli atau perbaikan gaya jika perlu.
 
-            Pastikan respons Anda HANYA JSON.
+            Pastikan respons Anda HANYA JSON. Jangan sertakan teks, komentar, atau markup di luar JSON.
         ";
 
         // Payload yang diperbaiki
@@ -80,7 +86,7 @@ class EthicheckController extends Controller
         ];
 
         try {
-            $response = Http::withHeaders([
+            $response = Http::timeout(120)->withHeaders([
                 'Content-Type' => 'application/json',
             ])->post($url, $payload);
 
@@ -112,6 +118,17 @@ class EthicheckController extends Controller
                 throw new \Exception('Respons AI tidak valid atau tidak berformat JSON.');
             }
 
+            // --- FALLBACKS: jika AI tidak menyertakan 'score' atau 'recommended_text', buat fallback sederhana ---
+            if (!array_key_exists('score', $decoded)) {
+                $decoded['score'] = $this->computeScore($decoded);
+                Log::info('Computed fallback score: ' . $decoded['score']);
+            }
+
+            if (!array_key_exists('recommended_text', $decoded) || empty(trim((string)($decoded['recommended_text'] ?? '')))) {
+                $decoded['recommended_text'] = $this->generateRecommendedText($decoded, $userText);
+                Log::info('Generated fallback recommended_text.');
+            }
+
             return response()->json($decoded);
         } catch (\Exception $e) {
             Log::error('Gemini API Error: ' . $e->getMessage());
@@ -125,6 +142,45 @@ class EthicheckController extends Controller
      * Membersihkan respons AI dari backtick dan 'json'
      * (Fungsi ini dikembalikan)
      */
+    /**
+     * Hitung skor fallback sederhana berdasarkan jumlah penjelasan pelanggaran.
+     * Jika tidak ada penjelasan, kembalikan 100.
+     */
+    private function computeScore(array $decoded): int
+    {
+        if (empty($decoded['explanations']) || !is_array($decoded['explanations'])) {
+            return 100;
+        }
+
+        $count = count($decoded['explanations']);
+
+        // Deduct 20 points per violation up to a reasonable cap.
+        $deduction = min(95, $count * 20);
+        $score = max(0, 100 - $deduction);
+
+        return (int)$score;
+    }
+
+    /**
+     * Buat recommended_text fallback dengan menghapus tag <mark> dari highlighted_text
+     * atau dari teks asli jika highlighted_text tidak tersedia.
+     */
+    private function generateRecommendedText(array $decoded, string $original): string
+    {
+        $base = $decoded['highlighted_text'] ?? $original;
+
+        // Hapus tag <mark ...> dan kembalikan isi di dalamnya
+        $cleaned = preg_replace('/<mark[^>]*>(.*?)<\/mark>/is', '$1', $base);
+
+        // Hapus atribut data-violation-id yang mungkin tersisa (kata hati-hati)
+        $cleaned = preg_replace('/data-violation-id=\"?\d+\"?/i', '', $cleaned);
+
+        // Normalize whitespace
+        $cleaned = preg_replace('/\s+/', ' ', $cleaned);
+
+        return trim($cleaned);
+    }
+
     private function cleanAiResponse(string $text): string
     {
         $text = preg_replace('/^```json\s*/', '', $text);
