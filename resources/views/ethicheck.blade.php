@@ -425,6 +425,35 @@
                 // Bersihkan hasil sebelumnya
                 resultsBox.innerHTML = '';
 
+                // --- 0. Tampilkan Skor jika ada ---
+                let scoreVal = null;
+                if (typeof data.score === 'number') {
+                    scoreVal = data.score;
+                } else if (data.score) {
+                    const maybe = parseInt(data.score);
+                    if (!isNaN(maybe)) scoreVal = maybe;
+                }
+
+                if (scoreVal !== null) {
+                    const scoreWrap = document.createElement('div');
+                    scoreWrap.style = 'display:flex;align-items:center;gap:12px;margin-bottom:12px;';
+
+                    const scoreText = document.createElement('strong');
+                    scoreText.textContent = `Skor: ${scoreVal}/100`;
+
+                    const barOuter = document.createElement('div');
+                    barOuter.style = 'flex:1;height:12px;background:#e6eefc;border-radius:8px;overflow:hidden;';
+
+                    const barInner = document.createElement('div');
+                    const width = Math.max(0, Math.min(100, scoreVal));
+                    barInner.style = `height:100%;width:${width}%;background:linear-gradient(90deg,#2e66cc,#2f5aa0)`;
+
+                    barOuter.appendChild(barInner);
+                    scoreWrap.appendChild(scoreText);
+                    scoreWrap.appendChild(barOuter);
+                    resultsBox.appendChild(scoreWrap);
+                }
+
                 // 1. Tampilkan Teks (Selalu tampil, baik ada highlight atau tidak)
                 const highlightedContent = document.createElement('div');
                 highlightedContent.className = 'highlighted-text';
@@ -447,7 +476,7 @@
                         const listItem = document.createElement('li');
                         listItem.innerHTML = `
                             <div class="violation-id">${item.id}</div>
-                            <div class.violation-details">
+                            <div class="violation-details">
                                 <div class="violation-rule">${item.rule}</div>
                                 <p class="violation-reasoning">${item.reasoning}</p>
                             </div>
@@ -458,7 +487,21 @@
                     resultsBox.appendChild(explanationsList);
                 }
 
-                // 3. Tampilkan Status Message (Fitur baru dari prompt)
+                // 3. Tampilkan Rekomendasi Teks (jika disediakan atau dibuat fallback)
+                if (data.recommended_text) {
+                    const recTitle = document.createElement('h4');
+                    recTitle.textContent = 'Rekomendasi Berita yang Baik:';
+                    recTitle.style = 'margin-top:16px;margin-bottom:8px;color:var(--ink);';
+
+                    const recDiv = document.createElement('div');
+                    recDiv.className = 'results-box';
+                    recDiv.innerHTML = data.recommended_text.replace(/\n/g, '<br>');
+
+                    resultsBox.appendChild(recTitle);
+                    resultsBox.appendChild(recDiv);
+                }
+
+                // 4. Tampilkan Status Message (Fitur baru dari prompt)
                 if (data.status_message) {
                     const statusMsg = document.createElement('p');
                     statusMsg.style = "color: green; font-weight: bold; margin-top: 15px;";
