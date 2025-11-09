@@ -34,17 +34,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if(!topicsEl) return;
     topicsEl.innerHTML='';
     topicsEl.style.display = 'flex';
+    // Gunakan kartu bertuliskan S, K, T sesuai palet warna situs
     const suits=[
-      {cls:'spade',ch:'♠',rot:-12,dx:-80,z:3},
-      {cls:'heart',ch:'♥',rot:0,dx:0,z:2},
-      {cls:'diamond',ch:'♦',rot:12,dx:80,z:1}
+      {cls:'s',ch:'S',rot:-12,dx:-80,z:3},
+      {cls:'k',ch:'K',rot:0,dx:0,z:2},
+      {cls:'t',ch:'T',rot:12,dx:80,z:1}
     ];
     topics.forEach((t,i)=>{
       const s=suits[i% suits.length];
       const card=document.createElement('div');
       card.className=`playing-card ${s.cls}`;
       const base=`translateX(${s.dx}px) rotate(${s.rot}deg)`;
-      card.style.transform=base; card.dataset.base=base; card.style.zIndex=s.z;
+      card.style.transform=base; card.dataset.base=base; card.dataset.dx=String(s.dx); card.dataset.rot=String(s.rot); card.style.zIndex=s.z; card.tabIndex=0;
       card.innerHTML = `
         <div class="pc-inner">
           <div class="pc-face front">
@@ -75,6 +76,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }, delay);
       });
       topicsEl.appendChild(card);
+    });
+
+    // Tambah efek sebar saat hover/focus (desktop/keyboard)
+    setupSpreadInteractions(topicsEl);
+  }
+
+  function setupSpreadInteractions(container){
+    if(!container) return;
+    const isTouch = window.matchMedia('(pointer: coarse)').matches;
+    const cards = Array.from(container.querySelectorAll('.playing-card'));
+    // Reset helper
+    const reset = ()=>{
+      cards.forEach(c=>{ c.style.transform = c.dataset.base || ''; c.classList.remove('spread-target'); c.style.zIndex = c.style.zIndex || ''; });
+    };
+    if(isTouch){ reset(); return; }
+    const getSpread = ()=>{
+      const v = getComputedStyle(document.documentElement).getPropertyValue('--spread').trim();
+      const n = parseFloat(v.replace('px',''));
+      return isNaN(n)?120:n;
+    };
+    const spread = (target)=>{
+      const dist = getSpread();
+      const targetDx = parseFloat(target.dataset.dx||'0');
+      cards.forEach((c,idx)=>{
+        const dx = parseFloat(c.dataset.dx||'0');
+        const rot = parseFloat(c.dataset.rot||'0');
+        let tx = dx;
+        if(c!==target){ tx = dx + (dx<targetDx? -dist : dx>targetDx? dist : 0); }
+        const isTarget = c===target;
+        const ty = isTarget? -8: 0;
+        const sc = isTarget? ' var(--hover-scale)' : '';
+        c.style.transform = `translateX(${tx}px) rotate(${rot}deg) translateY(${ty}px)` + (isTarget? ` scale(${getComputedStyle(document.documentElement).getPropertyValue('--hover-scale').trim()||'1.04'})`:'');
+        c.classList.toggle('spread-target', isTarget);
+        if(isTarget) c.style.zIndex = '9';
+      });
+    };
+    // attach events
+    cards.forEach(c=>{
+      c.addEventListener('mouseenter', ()=>spread(c));
+      c.addEventListener('mouseleave', reset);
+      c.addEventListener('focusin', ()=>spread(c));
+      c.addEventListener('blur', reset);
     });
   }
 
