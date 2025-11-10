@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             SikataStageOneSeeder::class,
             SikataStageTwoSeeder::class,
+            EtipadSeeder::class,
         ]);
     }
 }

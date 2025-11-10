@@ -363,9 +363,73 @@
 
         <div class="wrap">
             <h1 class="headline">Welcome to <br><span>Etipad</span></h1>
-            <div class="panel">
-                <p>Halaman Etipad siap dihubungkan. Silakan tentukan konten/fiturnya, nanti saya wiring sesuai kebutuhan.</p>
+            <div class="panel" id="etipadApp" style="display:flex;gap:24px;flex-wrap:wrap">
+                <div style="flex:0 0 240px;display:flex;flex-direction:column;gap:10px">
+                    <div class="section-title" style="font-size:22px;margin:0 0 4px">Dokumen</div>
+                    <div id="docList" style="display:flex;flex-direction:column;gap:8px"></div>
+                </div>
+                <div style="flex:1;min-width:320px">
+                    <div id="docViewer" style="background:#fff;border:2px solid #b9d0ff;border-radius:14px;padding:16px;min-height:360px;line-height:1.55;font-size:15px;overflow:auto">
+                        <em style="color:#5b7fb5">Pilih dokumen di kiri untuk melihat isi.</em>
+                    </div>
+                </div>
             </div>
+            <script>
+                async function loadDocs() {
+                    try {
+                        const res = await fetch('/api/etipad/docs');
+                        const data = await res.json();
+                        const listEl = document.getElementById('docList');
+                        if (!data.documents || !Array.isArray(data.documents)) {
+                            listEl.innerHTML = '<div style="color:#b00020">Gagal memuat dokumen.</div>';
+                            return;
+                        }
+                        listEl.innerHTML = '';
+                        data.documents.forEach(doc => {
+                            const btn = document.createElement('button');
+                            btn.type = 'button';
+                            btn.textContent = doc.title;
+                            btn.style.cssText = 'text-align:left;padding:10px 12px;border:2px solid #d0e2ff;background:#f5faff;color:#1b4a7a;font-weight:600;border-radius:10px;cursor:pointer;font-size:14px;line-height:1.3;';
+                            btn.addEventListener('click', () => openDoc(doc.slug, btn));
+                            listEl.appendChild(btn);
+                        });
+                    } catch (e) {
+                        document.getElementById('docList').innerHTML = '<div style="color:#b00020">Error koneksi.</div>';
+                    }
+                }
+                async function openDoc(slug, btn) {
+                    const viewer = document.getElementById('docViewer');
+                    viewer.innerHTML = '<div style="display:flex;align-items:center;gap:8px"><div class="loading-spinner" style="width:22px;height:22px"></div><span>Memuat...</span></div>';
+                    try {
+                        const res = await fetch('/api/etipad/docs/' + encodeURIComponent(slug));
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || 'Gagal');
+                        const doc = data.document;
+                        if (doc.file_url && (doc.mime_type === 'application/pdf' || /\.pdf($|\?)/i.test(doc.file_url))) {
+                            viewer.innerHTML = '<h2 style="margin:0 0 12px;font-size:20px;color:#2d5fbf">' + doc.title + '</h2>' +
+                                '<div style="border:1px solid #d0e2ff;border-radius:8px;overflow:hidden">' +
+                                '<iframe src="' + doc.file_url + '#view=FitH" style="width:100%;height:70vh;border:0" title="' + doc.title + '"></iframe>' +
+                                '</div>';
+                        } else {
+                            const raw = doc.content || '';
+                            const safe = raw.replace(/[&<>]/g, c => ({
+                                '&': '&amp;',
+                                '<': '&lt;',
+                                '>': '&gt;'
+                            } [c]));
+                            // convert line breaks (both literal \\n and real newlines)
+                            const html = safe.replace(/\\r\\n/g, '<br>').replace(/\\n/g, '<br>').replace(/\r?\n/g, '<br>');
+                            viewer.innerHTML = '<h2 style="margin:0 0 12px;font-size:20px;color:#2d5fbf">' + doc.title + '</h2>' + '<div style="font-size:14px">' + html + '</div>';
+                        }
+                    } catch (e) {
+                        viewer.innerHTML = '<span style="color:#b00020">Tidak dapat memuat isi dokumen.</span>';
+                    }
+                    // highlight active button
+                    document.querySelectorAll('#docList button').forEach(b => b.style.background = '#f5faff');
+                    if (btn) btn.style.background = '#e3f0ff';
+                }
+                loadDocs();
+            </script>
         </div>
     </div>
 </body>
