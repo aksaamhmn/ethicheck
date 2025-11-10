@@ -31,7 +31,7 @@
             </div>
             <h1 class="headline">Welcome to <br><span>Etipad</span></h1>
             <div class="head-switch">
-                <button type="button" id="btnPasal" class="active">Pasal</button>
+                <button type="button" id="btnPasal" class="active">Pedoman</button>
                 <button type="button" id="btnBerita">Berita</button>
             </div>
             <!-- PASAL (Dokumen) SECTION -->

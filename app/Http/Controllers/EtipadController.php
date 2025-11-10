@@ -12,11 +12,18 @@ class EtipadController extends Controller
     public function index()
     {
         $docs = EtipadDocument::orderBy('id')->get()->map(function ($d) {
+            $isPasal = str_starts_with($d->slug, 'pasal-');
+            $content = $d->content ?? '';
+            $excerpt = $content ? trim(mb_substr(preg_replace('/\s+/', ' ', $content), 0, 160)) . (mb_strlen($content) > 160 ? '…' : '') : null;
             return [
                 'slug' => $d->slug,
                 'title' => $d->title,
                 'file_url' => $d->file_path ? Storage::url($d->file_path) : null,
                 'mime_type' => $d->mime_type,
+                'category' => $isPasal ? 'Pasal' : 'Dokumen',
+                'excerpt' => $excerpt,
+                'updated_at' => optional($d->updated_at)->format('d M Y'),
+                'has_content' => (bool) $d->content,
             ];
         });
         return response()->json(['documents' => $docs]);
