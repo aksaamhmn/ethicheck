@@ -1,0 +1,27 @@
+services:
+  mysql:
+    image: mysql:8
+    container_name: ethicheck-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ethicheck
+      MYSQL_USER: ethicheck_user
+      MYSQL_PASSWORD: secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: ethicheck_user
+      PMA_PASSWORD: secret
+    ports:
+      - "8080:80"
+
+volumes:
+  mysql_data:
