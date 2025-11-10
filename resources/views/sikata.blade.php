@@ -1,13 +1,16 @@
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SIKATA — Ethicheck Quiz</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/sikata.css') }}">
-    <script defer src="{{ asset('js/sikata.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <script defer src="{{ asset('js/sikata.js') . '?v=' . filemtime(public_path('js/sikata.js')) }}"></script>
 </head>
+
 <body>
     <div class="window">
         <div class="win-bar">
@@ -29,11 +32,11 @@
                 </div>
                 <div>
                     <div class="panel">
-                        <div class="section-title">Pilih Topik</div>
+                        <div class="section-title" id="topicTitle">Pilih Topik</div>
                         <div id="topicChosen" class="topic-chosen" style="display:none"></div>
                         <div class="topics" id="topics"></div>
                         <div class="quiz" id="quiz">
-                            <div style="display:flex;align-items:center;justify-content:space-between">
+                            <div class="quiz-header" id="quizHeader" style="display:flex;align-items:center;justify-content:space-between">
                                 <div class="section-title" style="margin:0">Soal</div>
                                 <div class="progress">Soal <span id="qnum">0</span>/<span id="qtotal">0</span> • Skor: <span id="score">0</span></div>
                             </div>
@@ -51,6 +54,7 @@
         </div>
     </div>
 
-    
+
 </body>
+
 </html>
