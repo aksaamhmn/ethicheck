@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SIKATA — Ethicheck Quiz</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/sikata.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/sikata.css') . '?v=' . filemtime(public_path('css/sikata.css')) }}">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
     <script defer src="{{ asset('js/sikata.js') . '?v=' . filemtime(public_path('js/sikata.js')) }}"></script>
 </head>
@@ -22,12 +22,28 @@
             </div>
         </div>
 
+        <!-- Decorative ornaments layer -->
+        <div class="ornaments" aria-hidden="true">
+            <div class="orn o-bubble o-b1"></div>
+            <div class="orn o-bubble o-b2"></div>
+            <div class="orn o-dots o-d1"></div>
+            <div class="orn o-ring o-r1"></div>
+            <div class="orn o-spark o-s1"></div>
+            <div class="orn o-spark o-s2"></div>
+            <!-- extra ornaments: faint cards and accents -->
+            <div class="orn o-card oc-s">S</div>
+            <div class="orn o-card oc-k">K</div>
+            <div class="orn o-card oc-t">T</div>
+            <div class="orn o-grid o-g1"></div>
+            <div class="orn o-wave o-w1"></div>
+        </div>
+
         <div class="wrap">
             <div class="grid">
                 <div>
                     <h1 class="headline">Welcome to <br><span>SIKATA</span></h1>
-                    <div class="panel">
-                        <p>Pilih topik kuis di kanan. Setelah memilih kartu, Anda akan melihat studi kasus dan diminta memilih kalimat yang salah secara etika. Sistem akan memberi penjelasan dan skor seketika.</p>
+                    <div class="panel" id="infoPanel">
+                        <p id="gameInfo">Pilih topik kuis di kanan. Setelah memilih kartu, Anda akan melihat studi kasus dan diminta memilih kalimat yang salah secara etika. Sistem akan memberi penjelasan dan skor seketika.</p>
                     </div>
                 </div>
                 <div>
