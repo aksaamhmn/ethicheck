@@ -57,6 +57,83 @@ body {
 .dot.green {
     background: #27c93f;
 }
+/* Tiny icon next to section titles */
+.section-title .mini-icon{font-size:18px;margin-right:6px;filter:saturate(.9)}
+/* Ornaments (public build) */
+.ornaments {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1;
+}
+.orn {
+    position: absolute;
+    opacity: .32;
+    filter: blur(.2px);
+}
+.o-bubble {
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, .9), rgba(255, 255, 255, .6) 40%, rgba(255, 255, 255, 0) 70%);
+    border-radius: 50%;
+}
+.o-b1 {
+    width: 180px;
+    height: 180px;
+    top: 80px;
+    left: -60px;
+}
+.o-b2 {
+    width: 140px;
+    height: 140px;
+    bottom: 120px;
+    right: -40px;
+}
+.o-dots {
+    background: radial-gradient(var(--blue) 2px, transparent 2px);
+    background-size: 14px 14px;
+    opacity: .18;
+}
+.o-d1 {
+    width: 180px;
+    height: 120px;
+    top: 220px;
+    right: 60px;
+    transform: rotate(12deg);
+}
+.o-ring {
+    border: 3px solid rgba(45, 95, 191, .25);
+    border-radius: 50%;
+}
+.o-r1 {
+    width: 120px;
+    height: 120px;
+    top: 24px;
+    right: 180px;
+}
+.o-spark {
+    width: 14px;
+    height: 14px;
+    background: linear-gradient(135deg, rgba(45, 95, 191, .9), rgba(46, 102, 204, .2));
+    transform: rotate(45deg);
+    border-radius: 2px;
+}
+.o-s1 {
+    top: 140px;
+    left: 280px;
+}
+.o-s2 {
+    bottom: 180px;
+    left: 120px;
+}
+/* extra ornaments */
+.o-card{width:92px;height:128px;background:rgba(255,255,255,.65);border:3px solid rgba(46,102,204,.15);border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.08);display:grid;place-items:center;font-weight:800;font-size:34px}
+.oc-s{top:90px;right:32px;transform:rotate(-8deg);color:#2d5fbf}
+.oc-k{bottom:70px;right:150px;transform:rotate(7deg);color:#2f5aa0}
+.oc-t{bottom:60px;left:60px;transform:rotate(-2deg);color:#224c99}
+.o-grid{background-image:repeating-linear-gradient(0deg, rgba(46,102,204,.12) 0 1px, transparent 1px 14px),repeating-linear-gradient(90deg, rgba(46,102,204,.12) 0 1px, transparent 1px 14px);opacity:.18;border-radius:12px}
+.o-g1{width:200px;height:140px;left:220px;top:34px;transform:rotate(-6deg)}
+.o-wave{background:radial-gradient(120px 40px at 50% 0%, rgba(46,102,204,.18), rgba(46,102,204,0) 60%)}
+.o-w1{width:320px;height:120px;left:50%;transform:translateX(-50%);bottom:40px}
 /* Section menu: keep exactly like screenshot */
 .tabs {
     display: flex;
@@ -144,6 +221,8 @@ body {
     justify-content: center;
     perspective: 1000px;
 }
+/* soft dot grid behind topics */
+.topics::before{content:"";position:absolute;inset:6px;border-radius:12px;background-image:radial-gradient(rgba(46,102,204,.12) 2px, transparent 2px);background-size:14px 14px;opacity:.25;z-index:0;pointer-events:none}
 .playing-card {
     width: 120px;
     height: 160px;
@@ -183,6 +262,11 @@ body {
     border-radius: 8px;
     backface-visibility: hidden;
 }
+/* halo on hover */
+.playing-card:hover .pc-face{box-shadow:0 0 0 3px rgba(46,102,204,.12), 0 12px 26px rgba(0,0,0,.18)}
+/* pulse once after flip */
+@keyframes pulse2{0%{box-shadow:0 0 0 0 rgba(46,102,204,.18)}70%{box-shadow:0 0 0 12px rgba(46,102,204,0)}100%{box-shadow:0 0 0 0 rgba(46,102,204,0)}}
+.playing-card.flipped .pc-face{animation:pulse2 1.5s ease-out 1}
 .pc-face.back {
     transform: rotateY(180deg);
     display: grid;
@@ -266,13 +350,33 @@ body {
 .opt {
     background: #f6fbff;
     border: 2px solid #d7e6ff;
+    color: #1b4a7a;
+    font-weight: 600;
     padding: 12px;
     border-radius: 10px;
     cursor: pointer;
+    position: relative;
+    transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .05s ease;
 }
-.opt.selected {
+.opt:hover {
     background: #eef6ff;
     border-color: #b9d0ff;
+}
+.opt.selected {
+    background: #ffffff;
+    border-color: #2d5fbf;
+    box-shadow: 0 0 0 3px rgba(45, 95, 191, 0.18) inset, 0 6px 14px rgba(45, 95, 191, 0.08);
+}
+.opt.selected::before {
+    content: "";
+    position: absolute;
+    left: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 24px;
+    border-radius: 3px;
+    background: #2d5fbf;
 }
 .opt.correct {
     background: #e9fff3;
@@ -313,6 +417,7 @@ body {
     font-weight: 700;
     color: #2d5fbf;
 }
+.progress::before{content:"⚡ ";color:#2d5fbf}
 
 /* Highlight for violation sentences inside article */
 .violation-highlight {
@@ -398,6 +503,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
     .pc-inner {
         transition: none;
+    .playing-card.flipped .pc-face{animation:none}
     }
     .playing-card {
         transition: none;

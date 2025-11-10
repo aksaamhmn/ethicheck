@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const nextBtn = document.getElementById("nextBtn");
     const backBtn = document.getElementById("backBtn");
     const explanationEl = document.getElementById("explanation");
+    const infoEl = document.getElementById("gameInfo");
     const quizHeaderEl = document.getElementById("quizHeader");
     const topicTitleEl = document.getElementById("topicTitle");
 
@@ -76,6 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!topicsEl) return;
         topicsEl.innerHTML = "";
         topicsEl.style.display = "flex";
+        setInfo("select");
         // Ensure fixed order: PS (pelecehan-seksual), S (sara), E (ekonomi)
         const order = ["pelecehan-seksual", "sara", "ekonomi"];
         const topicsOrdered = [...apiTopics].sort((a, b) => {
@@ -228,6 +230,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (backBtn) {
                 backBtn.style.display = "none";
             }
+            setInfo("topic", { title: topic.name });
             renderSentences();
         } catch (err) {
             console.error(err);
@@ -269,7 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             }
         }
-        // (Removed stray misplaced nextBtn.textContent line inserted by earlier patch)
+    // (Removed stray misplaced nextBtn.textContent line inserted by earlier patch)
         currentCase.sentences.forEach((s) => {
             const o = document.createElement("div");
             o.className = "opt";
@@ -279,6 +282,7 @@ document.addEventListener("DOMContentLoaded", () => {
             optionsEl.appendChild(o);
         });
         updateProgress();
+        setInfo("identify");
     }
 
     function toggleSelect(el, idx) {
@@ -465,6 +469,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 "[SIKATA] Ready to start Stage2, mode=start-stage2 (button=Redaktur Pintar)"
             );
         }
+        setInfo("identifyResult");
     }
 
     function attachViolationHighlights(result) {
@@ -762,6 +767,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         validateCurrentCorrection();
         updateBackButtonForStage2();
+        setInfo("stage2Page", { index: grp.index, page: currentCorrectionPage + 1, total: correctionsData.length });
     }
 
     function validateCurrentCorrection() {
@@ -880,6 +886,7 @@ document.addEventListener("DOMContentLoaded", () => {
             backBtn.textContent = "Kembali ke Topik";
         }
         // Defer score update to Stage 3
+        setInfo("summary");
     }
 
     function renderFinalArticlePage() {
@@ -918,6 +925,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (backBtn) backBtn.style.display = "none"; // hide back on final page
         if (quizHeaderEl) quizHeaderEl.style.display = "none"; // hide header Stage 3
         currentMode = "done-final";
+        const total = (identifyScore || 0) + (finalResult?.score_correct || 0);
+        setInfo("final", { total });
     }
 
     async function confirmExitToTopics() {
@@ -962,6 +971,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .forEach((n) => n.classList.remove("flipped"));
         currentMode = "identify";
         loadTopics();
+        setInfo("select");
     }
 
     if (backBtn) {
@@ -975,6 +985,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 } else {
                     // On first Stage 2 question: go back to Sorot Berita (Stage 1 summary)
                     goBackToSorotBerita();
+                    setInfo("identifyResult");
                     return;
                 }
             }
@@ -995,6 +1006,42 @@ document.addEventListener("DOMContentLoaded", () => {
             // Other modes fallback
             resetToTopics();
         });
+    }
+
+    // ——— Info panel helper ———
+    function setInfo(state, data = {}) {
+        if (!infoEl) return;
+        let html = "";
+        switch (state) {
+            case "select":
+                html =
+                    "Pilih salah satu kartu topik di sebelah kanan. Arahkan kursor untuk melihat judul topik, lalu klik untuk memulai.";
+                break;
+            case "topic":
+                html = `Topik dipilih: <strong>${(data.title || "").replace(/</g,'&lt;')}</strong>. Sorot kalimat yang melanggar etika, bisa memilih lebih dari satu, lalu klik Submit.`;
+                break;
+            case "identify":
+                html =
+                    "Sesi Sorot Berita: tandai kalimat yang bermasalah (multi-pilih), kemudian klik Submit untuk dinilai.";
+                break;
+            case "identifyResult":
+                html =
+                    "Ringkasan Sorot Berita: tinjau penjelasan di kanan. Lanjutkan ke Redaktur Pintar untuk memilih revisi kalimat terbaik.";
+                break;
+            case "stage2Page":
+                html = `Redaktur Pintar: pilih versi revisi terbaik untuk Kalimat ${data.index}. Halaman ${data.page}/${data.total}.`;
+                break;
+            case "summary":
+                html =
+                    "Rangkuman Koreksi: lihat pilihanmu dan jawaban benar. Klik ‘Lihat Skor & Berita Final’.";
+                break;
+            case "final":
+                html = `Berita Final: baca naskah berita yang benar. Total skor: <strong>${data.total ?? ''}</strong>. Klik Selesai untuk menutup sesi.`;
+                break;
+            default:
+                html = infoEl.textContent || "Pilih topik untuk memulai.";
+        }
+        infoEl.innerHTML = html;
     }
 
     // Init

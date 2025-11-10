@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const nextBtn = document.getElementById('nextBtn');
   const backBtn = document.getElementById('backBtn');
   const explanationEl = document.getElementById('explanation');
+  const infoEl = document.getElementById('gameInfo');
+  const topicTitleEl = document.getElementById('topicTitle');
 
   let currentTopic = null, idx = 0, score = 0, answered = false;
 
@@ -34,6 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if(!topicsEl) return;
     topicsEl.innerHTML='';
     topicsEl.style.display = 'flex';
+    // Update info panel untuk mode pilih topik
+    setInfo('select');
+    if(topicTitleEl) topicTitleEl.textContent = 'Pilih Topik';
     // Gunakan kartu bertuliskan S, K, T sesuai palet warna situs
     const suits=[
       {cls:'s',ch:'S',rot:-12,dx:-80,z:3},
@@ -127,6 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if(backBtn) backBtn.style.display='none';
     if(explanationEl) explanationEl.style.display='none';
     if(nextBtn) nextBtn.disabled = true;
+    setInfo('topic', { title: currentTopic.title });
+    if(topicTitleEl) topicTitleEl.textContent = `Topik dipilih: ${currentTopic.title}`;
     renderQuestion();
   }
 
@@ -142,6 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     answered=false; if(explanationEl) explanationEl.style.display='none';
     if(nextBtn) nextBtn.disabled=true; updateProgress();
+    setInfo('question', { n: idx+1, total: currentTopic.questions.length });
   }
 
   function choose(i,el){
@@ -151,6 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(explanationEl){ explanationEl.style.display='block'; explanationEl.textContent=q.explanation; }
     if(nextBtn){ nextBtn.disabled=false; nextBtn.textContent = idx < currentTopic.questions.length-1 ? 'Lanjut' : 'Selesai'; }
     if(backBtn){ backBtn.style.display='none'; }
+    setInfo('answered', { correct: i===q.correct });
   }
 
   function updateProgress(){ qnum.textContent=idx+1; qtotal.textContent=currentTopic? currentTopic.questions.length:0; scoreEl.textContent=score; }
@@ -171,6 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.playing-card').forEach(n=>n.classList.remove('flipped'));
       currentTopic=null; idx=0; score=0; updateProgress();
       renderTopics();
+      setInfo('select');
     });
   }
 
@@ -178,7 +188,69 @@ document.addEventListener('DOMContentLoaded', () => {
     if(explanationEl){ explanationEl.style.display='block'; explanationEl.innerHTML = `Selesai! Skor: <strong>${score}</strong> dari ${currentTopic.questions.length}.`; }
     if(nextBtn) nextBtn.disabled=true;
     if(backBtn) backBtn.style.display='inline-block';
+    setInfo('finished', { score, total: currentTopic.questions.length });
+    celebrate(score, currentTopic.questions.length);
   }
 
   renderTopics();
+
+  // ——— Info panel helper ———
+  function setInfo(state, data={}){
+    if(!infoEl) return;
+    let html='';
+    switch(state){
+      case 'select':
+        html = 'Pilih salah satu kartu topik di sebelah kanan. Arahkan kursor untuk melihat judul topik, lalu klik untuk memulai.';
+        break;
+      case 'topic':
+        html = `Topik dipilih: <strong>${data.title||''}</strong>. Baca studi kasus lalu pilih kalimat yang melanggar etika.`;
+        break;
+      case 'question':
+        html = `Soal ${data.n||1} dari ${data.total||''}. Pilih satu jawaban yang menurut Anda <em>paling bermasalah</em> secara etika.`;
+        break;
+      case 'answered':
+        html = data.correct ? 'Jawaban Anda benar. Tekan Lanjut untuk ke soal berikutnya.' : 'Belum tepat. Baca penjelasan di kanan, lalu tekan Lanjut.';
+        break;
+      case 'finished':
+        html = `Selesai! Skor Anda <strong>${data.score}</strong> dari ${data.total}. Tekan "Kembali ke topik" untuk mencoba topik lain.`;
+        break;
+      default:
+        html = infoEl.textContent || 'Pilih topik untuk memulai.';
+    }
+    infoEl.innerHTML = html;
+  }
+
+  // Simple confetti celebration when finishing topic
+  function celebrate(sc,total){
+    const ratio = total? sc/total:0; // drive colors if needed
+    const existing = document.querySelector('.confetti-wrap');
+    if(existing) existing.remove();
+    const wrap = document.createElement('div');
+    wrap.className='confetti-wrap';
+    const colors = ['#2d5fbf','#224c99','#2f5aa0','#ffb347','#6dd5c9'];
+    const pieces = 40 + Math.round(20*ratio);
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    for(let i=0;i<pieces;i++){
+      const el=document.createElement('div');
+      el.className='confetti-piece';
+      const color = colors[i % colors.length];
+      const x = Math.random()*100; // vw
+      const y = - (Math.random()*20 + 5); // start above
+      const dx = (Math.random()*40 - 20); // horizontal drift px
+      const dy = (Math.random()* (reduce?40:160) + 60); // fall distance
+      const dur = (Math.random()* (reduce?2:3) + (reduce?2:3.5)).toFixed(2);
+      el.style.background=color;
+      el.style.left = x + 'vw';
+      el.style.top = y + 'vh';
+      el.style.setProperty('--x','0px');
+      el.style.setProperty('--y','0px');
+      el.style.setProperty('--dx', dx+'px');
+      el.style.setProperty('--dy', dy+'px');
+      el.style.animation = `confettiFall ${dur}s linear forwards`;
+      wrap.appendChild(el);
+    }
+    document.body.appendChild(wrap);
+    // cleanup
+    setTimeout(()=>wrap.remove(), (reduce?5000:8000));
+  }
 });
