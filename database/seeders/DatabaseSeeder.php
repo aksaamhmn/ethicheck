@@ -27,6 +27,9 @@ class DatabaseSeeder extends Seeder
             SikataStageOneSeeder::class,
             SikataStageTwoSeeder::class,
             EtipadSeeder::class,
+            EtipadPasalSeeder::class,
+            EtipadNewsImportSeeder::class, // optional JSON import (news.json)
+            EtipadNewsPasalSeeder::class, // Pasal analyses also available under Berita
         ]);
     }
 }

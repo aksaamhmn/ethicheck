@@ -26,115 +26,75 @@ class EthicheckController extends Controller
         $request->validate(['text' => 'required|string|min:50']);
         $userText = $request->input('text');
 
-        $apiKey = config('gemini.api_key');
+        // 1. AMBIL DAN BERSIHKAN API KEY (TRIM PENTING!)
+        $apiKey = trim(config('gemini.api_key'));
 
-        if (!$apiKey) {
-            Log::error('Gemini API Key not found in config/gemini.php or .env');
-            return response()->json(['error' => 'Konfigurasi API Key server tidak ditemukan.'], 500);
+        if (empty($apiKey)) {
+            Log::error('Gemini API Key kosong atau tidak ditemukan.');
+            return response()->json(['error' => 'Konfigurasi API Key bermasalah.'], 500);
         }
 
-        // URL v1 yang sudah benar
-        // INI URL YANG BENAR (MENGGUNAKAN MODEL STABIL):
-        $url = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" . $apiKey;
+        // Ubah $url di EthicheckController.php menjadi:
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent";
 
-        // Prompt Anda yang sudah disempurnakan
         $prompt = "
-            Anda adalah seorang ahli editor jurnalisme Indonesia yang sangat teliti.
-            Tugas Anda adalah menganalisis teks berita berdasarkan TIGA sumber aturan ketat:
-            1. UU Nomor 40 Tahun 1999 Tentang Pers
-            2. Pedoman Pemberitaan Media Siber
-            3. Kode Etik Jurnalistik (KEJ)
-
-            Analisis teks berikut:
+            Anda adalah ahli editor jurnalisme. Analisis teks ini berdasarkan UU Pers, Pedoman Media Siber, dan KEJ:
             \"" . $userText . "\"
-
-            Lakukan tugas-tugas berikut:
-            1. Kembalikan respons HANYA dalam format JSON yang valid.
-            2. JSON harus memiliki kunci-kunci: 'highlighted_text', 'explanations', 'status_message'.
-            3. Tambahkan kunci 'score' (integer 0-100) yang menunjukkan seberapa sesuai teks dengan pedoman (0 = sangat buruk, 100 = sempurna).
-            4. Tambahkan kunci 'recommended_text' yang berisi versi berita yang telah diperbaiki atau direkomendasikan agar sesuai pedoman (ringkas dan konkret jika memungkinkan).
-
-            SKENARIO 1: JIKA ADA PELANGGARAN
-            - 'highlighted_text': Kembalikan teks berita LENGKAP, tetapi bungkus frasa yang melanggar dengan tag <mark data-violation-id=\"N\">...</mark>.
-            - 'explanations': Berisi array objek (id, rule, reasoning).
-            - 'status_message': null
-            - 'score': Berikan angka antara 0-100 sesuai tingkat pelanggaran.
-            - 'recommended_text': Berikan contoh perbaikan teks yang menanggulangi pelanggaran.
-
-            SKENARIO 2: JIKA TIDAK ADA PELANGGARAN
-            - 'highlighted_text': Kembalikan teks berita LENGKAP apa adanya (tanpa tag <mark>).
-            - 'explanations': Kembalikan array kosong [].
-            - 'status_message': \"Berita sudah sesuai pedoman\"
-            - 'score': 100
-            - 'recommended_text': Kembalikan teks asli atau perbaikan gaya jika perlu.
-
-            Pastikan respons Anda HANYA JSON. Jangan sertakan teks, komentar, atau markup di luar JSON.
+            
+            Output JSON:
+            - highlighted_text (string dengan tag <mark> jika ada pelanggaran)
+            - explanations (array of objects: id, rule, reasoning)
+            - status_message (string or null)
+            - score (int 0-100)
+            - recommended_text (string perbaikan)
+            
+            Hanya JSON valid. Tanpa markdown ```json.
         ";
 
-        // Payload yang diperbaiki
         $payload = [
             'contents' => [
-                [
-                    'role' => 'user',
-                    'parts' => [['text' => $prompt]]
-                ]
+                ['parts' => [['text' => $prompt]]]
             ],
             'generationConfig' => [
-                // 'responseMimeType' DIHAPUS KARENA MENYEBABKAN ERROR 400
                 'temperature' => 0.5,
             ]
         ];
 
         try {
-            $response = Http::timeout(120)->withHeaders([
-                'Content-Type' => 'application/json',
-            ])->post($url, $payload);
+            // 3. KIRIM REQUEST DENGAN HEADER 'x-goog-api-key'
+            // Menggunakan header lebih aman daripada menempelkan key di URL
+            $response = Http::retry(3, 2000) // Coba 3x, jeda 2 detik
+                ->timeout(60)
+                ->withHeaders([
+                    'Content-Type' => 'application/json',
+                    'x-goog-api-key' => $apiKey
+                ])
+                ->post($url, $payload);
 
             if (!$response->successful()) {
-                Log::error('Gemini API HTTP Error', $response->json() ?: ['body' => $response->body()]);
-                throw new \Exception('API call gagal: ' . $response->status() . ' - ' . $response->body());
+                // Log error detail dari Google untuk debugging
+                Log::error('Gemini API Error Detail:', $response->json() ?? []);
+                throw new \Exception('API Error: ' . $response->status() . ' - ' . $response->body());
             }
 
-            // Ambil teks mentah dari dalam respons
             $rawJsonText = $response->json('candidates.0.content.parts.0.text');
 
-            Log::info('Gemini Raw Response (Mentah): ' . $rawJsonText);
-
-            if (empty($rawJsonText)) {
-                Log::warning('AI mengembalikan respons JSON yang kosong.', $response->json());
-                throw new \Exception('AI mengembalikan respons JSON yang kosong.');
-            }
-
-            // --- KEMBALIKAN FUNGSI CLEANER ---
-            // Karena kita tidak memaksa JSON, AI mungkin mengirim markdown
+            // ... (Sisa logika decoding JSON ke bawah tetap sama seperti kode Anda sebelumnya)
             $cleanedJsonText = $this->cleanAiResponse($rawJsonText);
-            Log::info('Gemini Raw Response (Bersih): ' . $cleanedJsonText);
-
-            // Decode teks JSON yang sudah bersih
             $decoded = json_decode($cleanedJsonText, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                Log::warning('Failed to decode JSON from Gemini. Cleaned text was: ' . $cleanedJsonText);
-                throw new \Exception('Respons AI tidak valid atau tidak berformat JSON.');
+                throw new \Exception('Format JSON dari AI rusak.');
             }
 
-            // --- FALLBACKS: jika AI tidak menyertakan 'score' atau 'recommended_text', buat fallback sederhana ---
-            if (!array_key_exists('score', $decoded)) {
-                $decoded['score'] = $this->computeScore($decoded);
-                Log::info('Computed fallback score: ' . $decoded['score']);
-            }
-
-            if (!array_key_exists('recommended_text', $decoded) || empty(trim((string)($decoded['recommended_text'] ?? '')))) {
-                $decoded['recommended_text'] = $this->generateRecommendedText($decoded, $userText);
-                Log::info('Generated fallback recommended_text.');
-            }
+            // Fallback logic (tetap gunakan yang lama)
+            if (!isset($decoded['score'])) $decoded['score'] = $this->computeScore($decoded);
+            if (!isset($decoded['recommended_text'])) $decoded['recommended_text'] = $this->generateRecommendedText($decoded, $userText);
 
             return response()->json($decoded);
         } catch (\Exception $e) {
-            Log::error('Gemini API Error: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'Gagal menganalisis teks. Silakan coba lagi.'
-            ], 500);
+            Log::error('Analyze Exception: ' . $e->getMessage());
+            return response()->json(['error' => 'Gagal memproses: ' . $e->getMessage()], 500);
         }
     }
 
@@ -186,5 +146,31 @@ class EthicheckController extends Controller
         $text = preg_replace('/^```json\s*/', '', $text);
         $text = preg_replace('/\s*```$/', '', $text);
         return trim($text);
+    }
+
+    public function checkConnection()
+    {
+        $apiKey = trim(config('gemini.api_key'));
+
+        // 1. Cek apakah Key terbaca oleh Laravel
+        if (empty($apiKey)) {
+            return response()->json(['error' => 'API Key kosong. Cek .env dan config/gemini.php'], 500);
+        }
+
+        // 2. Minta daftar model yang tersedia untuk Key ini
+        // Endpoint ini tidak melakukan generate, hanya melist model.
+        $url = "https://generativelanguage.googleapis.com/v1beta/models?key=" . $apiKey;
+
+        try {
+            $response = Http::get($url);
+
+            return response()->json([
+                'status' => $response->status(),
+                'key_preview' => substr($apiKey, 0, 5) . '...', // Cek apakah key yang terkirim benar
+                'response_body' => $response->json(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

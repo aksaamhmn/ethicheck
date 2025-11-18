@@ -15,3 +15,5 @@ Route::view('/etipad', 'etipad')->name('etipad');
 
 // Rute untuk AI (Kode Anda di sini sudah benar)
 Route::post('/analyze', [EthicheckController::class, 'analyze'])->name('ethicheck.analyze');
+
+Route::get('/debug-gemini', [App\Http\Controllers\EthicheckController::class, 'checkConnection']);
