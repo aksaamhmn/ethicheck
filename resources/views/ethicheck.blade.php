@@ -9,7 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
     @php $cssP = public_path('css/ethicheck.css'); $cssV = file_exists($cssP) ? filemtime($cssP) : time(); $jsP = public_path('js/ethicheck.js'); $jsV = file_exists($jsP) ? filemtime($jsP) : time(); @endphp
     <link rel="stylesheet" href="{{ asset('css/ethicheck.css') }}?v={{ $cssV }}">
-    <script>window.ETHICHECK_CONFIG = { analyzeUrl: "{{ route('ethicheck.analyze') }}", csrf: "{{ csrf_token() }}" };</script>
+    <script>
+        window.ETHICHECK_CONFIG = {
+            analyzeUrl: "{{ route('ethicheck.analyze') }}",
+            csrf: "{{ csrf_token() }}"
+        };
+    </script>
     <script src="{{ asset('js/ethicheck.js') }}?v={{ $jsV }}" defer></script>
 </head>
 
@@ -23,7 +28,7 @@
             <div class="tabs">
                 <a href="{{ route('ethicheck') }}" class="tab {{ request()->routeIs('ethicheck') ? 'active' : '' }}">Ethicheck</a>
                 <a href="{{ route('sikata') }}" class="tab {{ request()->routeIs('sikata') ? 'active' : '' }}">SIKATA</a>
-                <a href="{{ route('etipad') }}" class="tab {{ request()->routeIs('etipad') ? 'active' : '' }}">Etipad</a>
+                <a href="{{ route('etipad') }}" class="tab {{ request()->routeIs('etipad') ? 'active' : '' }}">Ethipad</a>
             </div>
         </div>
 
