@@ -907,15 +907,28 @@ document.addEventListener("DOMContentLoaded", () => {
                 .replace(/\r?\n/g, "<br>");
             const total =
                 (identifyScore || 0) + (finalResult.score_correct || 0);
-            explanationEl.style.display = "block";
-            explanationEl.innerHTML = `
-                            <div style="font-weight:700;color:#2d5fbf;margin-bottom:6px;text-align:center">Total Skor</div>
-                            <div style="font-size:40px;font-weight:800;color:#1b4a7a;text-align:center;margin-bottom:10px">${total}</div>
-                            <div style="margin-top:4px;padding:14px;border:2px solid #d6e6ff;background:#fafcff;border-radius:12px">
-                                <div style="font-weight:800;color:#1b4a7a;margin-bottom:4px">Berita Final yang Benar</div>
-                                <div style="font-weight:600;color:#2d5fbf;margin-bottom:6px">${finalTitle}</div>
-                                <div style="line-height:1.55;font-size:14px;color:#1b4a7a">${finalArticle}</div>
-                            </div>`;
+                        const maxTotal = finalResult.max_score_total || 100;
+                        const pct = Math.max(0, Math.min(100, Math.round((total / maxTotal) * 100)));
+                        const radius = 52;
+                        const circumference = 2 * Math.PI * radius;
+                        const dashoffset = circumference * (1 - pct / 100);
+                        explanationEl.style.display = "block";
+                        explanationEl.innerHTML = `
+                                                        <div style="display:flex;justify-content:center;margin-bottom:10px">
+                                                            <div style="position:relative;width:140px;height:140px">
+                                                                <svg viewBox="0 0 120 120" style="width:100%;height:100%;transform:rotate(-90deg)" role="img" aria-label="Skor ${pct}%">
+                                                                    <circle cx="60" cy="60" r="${radius}" stroke="#eef2f6" stroke-width="14" fill="none" />
+                                                                    <circle cx="60" cy="60" r="${radius}" stroke="#2fbf7a" stroke-width="14" fill="none" stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${dashoffset}" />
+                                                                </svg>
+                                                                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:28px;color:#2fbf7a">${total}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div style="font-weight:700;color:#2d5fbf;margin:-2px 0 10px;text-align:center">Total Skor • ${total}</div>
+                                                        <div style="margin-top:4px;padding:14px;border:2px solid #d6e6ff;background:#fafcff;border-radius:12px">
+                                                                <div style="font-weight:800;color:#1b4a7a;margin-bottom:4px">Berita Final yang Benar</div>
+                                                                <div style="font-weight:600;color:#2d5fbf;margin-bottom:6px">${finalTitle}</div>
+                                                                <div style="line-height:1.55;font-size:14px;color:#1b4a7a">${finalArticle}</div>
+                                                        </div>`;
             if (scoreEl) scoreEl.textContent = String(total);
         }
         if (nextBtn) {

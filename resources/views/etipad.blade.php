@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Etipad</title>
+    <title>Ethipad</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
     @php $cssPath = public_path('css/etipad.css'); $cssVersion = file_exists($cssPath) ? filemtime($cssPath) : time(); @endphp
     <link rel="stylesheet" href="{{ asset('css/etipad.css') }}?v={{ $cssVersion }}">
@@ -17,7 +17,7 @@
             <div class="tabs">
                 <a href="{{ route('ethicheck') }}" class="tab {{ request()->routeIs('ethicheck') ? 'active' : '' }}">Ethicheck</a>
                 <a href="{{ route('sikata') }}" class="tab {{ request()->routeIs('sikata') ? 'active' : '' }}">SIKATA</a>
-                <a href="{{ route('etipad') }}" class="tab {{ request()->routeIs('etipad') ? 'active' : '' }}">Etipad</a>
+                <a href="{{ route('etipad') }}" class="tab {{ request()->routeIs('etipad') ? 'active' : '' }}">Ethipad</a>
             </div>
         </div>
 
@@ -29,7 +29,7 @@
                 <div class="d d-stamp"></div>
                 <div class="d d-clip"></div>
             </div>
-            <h1 class="headline">Welcome to <br><span>Etipad</span></h1>
+            <h1 class="headline">Welcome to <br><span>Ethipad</span></h1>
             <div class="head-switch">
                 <button type="button" id="btnPasal" class="active">Pasal</button>
                 <button type="button" id="btnBerita">Berita</button>
