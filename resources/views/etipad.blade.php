@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Etipad</title>
+    <title>Ethipad</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
     @php $cssPath = public_path('css/etipad.css'); $cssVersion = file_exists($cssPath) ? filemtime($cssPath) : time(); @endphp
     <link rel="stylesheet" href="{{ asset('css/etipad.css') }}?v={{ $cssVersion }}">
